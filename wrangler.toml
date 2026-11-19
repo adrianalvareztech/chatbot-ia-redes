@@ -1,0 +1,40 @@
+# La configuración para Cloudflare. Lo único que cambias aquí es el database_id (y [ai] si usas voz).
+name = "chatbot"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+preview_urls = false
+
+[vars]
+# apagado | solo-avisos | encendido   (simulador solo en .dev.vars)
+MODO = "solo-avisos"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "chatbot"
+database_id = "PEGA_AQUI_EL_ID"          # npx wrangler d1 create chatbot
+migrations_dir = "migrations"
+
+[[durable_objects.bindings]]
+name = "CONVERSACION"
+class_name = "Conversacion"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Conversacion"]
+
+# Para importar negocio/conocimiento.md como texto.
+[[rules]]
+type = "Text"
+globs = ["**/*.md"]
+fallthrough = true
+
+[triggers]
+crons = ["*/10 * * * *"]                 # copia de Notion, purga y conteo del mes
+
+[observability]
+enabled = true
+
+# Solo con modulos.voz = true:
+# [ai]
+# binding = "AI"

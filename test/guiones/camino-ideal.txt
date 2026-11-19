@@ -1,0 +1,5 @@
+# Camino ideal (sección 12 del PRD). Una línea por mensaje de la persona; los comandos empiezan con /.
+# Claude Code reescribe este guion con los casos de tu PRD.
+Hola, buenas tardes
+Quería saber cuánto cuesta una limpieza
+Sí, me gustaría agendar

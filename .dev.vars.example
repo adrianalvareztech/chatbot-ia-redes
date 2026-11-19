@@ -1,0 +1,26 @@
+# Copia este archivo como .dev.vars y llena tus llaves. .dev.vars nunca se sube a GitHub.
+# En la nube, cada una se guarda con: npx wrangler secret put NOMBRE
+# Los ids (cuenta de Zernio, páginas de Notion, tipo de cita, chat de Telegram) NO van aquí:
+# van en src/negocio/config.js.
+
+# Solo en tu compu: el bot llama a Claude de verdad pero no manda nada por Zernio.
+# Es lo que usa npm run simular. Bórralo para probar los otros modos en local.
+MODO=simulador
+
+# Siempre
+ANTHROPIC_API_KEY=
+ZERNIO_API_KEY=
+# Este lo inventas tú (una frase larga al azar). Es el mismo que le das a Zernio al crear el webhook.
+ZERNIO_WEBHOOK_SECRET=
+
+# Si conocimiento = "notion"
+NOTION_TOKEN=
+
+# Si agenda = "cal"
+CAL_API_KEY=
+
+# Si aviso = "telegram"
+TELEGRAM_BOT_TOKEN=
+
+# Si aviso = "correo"
+RESEND_API_KEY=
