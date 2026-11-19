@@ -1,11 +1,15 @@
 # Prompt 06 · Subirlo y conectarlo
 
+> Este es el camino a mano. La skill `/configurar-bot` hace este mismo paso contigo: te
+> pregunta, escribe y se detiene para que revises.
+
 Las llaves nunca se pegan en el chat. Claude te da un comando por llave; tú lo corres
 escribiendo `!` antes (por ejemplo `! npx wrangler secret put ZERNIO_API_KEY`) y pegas la
 llave cuando la terminal te la pida.
 
 ```
 Vamos a subir el bot. Paso por paso, esperando mi confirmación en cada uno:
+0. Corre npm run pendientes y dime qué dato falta antes de subir.
 1. Dame el comando para iniciar sesión en Cloudflare y el de npx wrangler d1 create chatbot,
    para que yo los corra con !. Pon en wrangler.toml el database_id que salga.
 2. Revisa que wrangler.toml diga MODO = "solo-avisos" y que src/negocio/config.js tenga el ID

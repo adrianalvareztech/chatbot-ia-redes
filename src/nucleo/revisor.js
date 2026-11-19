@@ -11,6 +11,8 @@ const MONEDA_ANTES = String.raw`(?:us\$|\$|€|\busd\b|\bmxn\b|\beur\b)`;
 const MONEDA_DESPUES = String.raw`(?:pesos|mxn|usd|d[oó]lares|dlls|euros|eur|€)(?![a-z])`;
 const DINERO = new RegExp(`${MONEDA_ANTES}\\s?(${NUM})|(${NUM})\\s?${MONEDA_DESPUES}`, "gi");
 const NUMERO = new RegExp(NUM, "g");
+// Con precios = "nunca": también una cifra dicha a medias ("15 mil", "quince mil pesos", "unos 300 dólares").
+const DINERO_EN_PALABRAS = /\b\d+\s?mil\b|\bmil(es)? (de )?(pesos|d[oó]lares)\b|\b(pesos|d[oó]lares|mxn|usd)\b/i;
 const CORREO = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g;
 const ENLACE = /\bhttps?:\/\/[^\s<>()]+|\bwww\.[^\s<>()]+|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|mx|net|org|io|ai|app|dev|co|me|link|site|store|shop|info|biz|es|us)\b(?:\/[^\s<>()]*)?/gi;
 const TELEFONO = /\+?\d[\d\s().-]{7,}\d/g;
@@ -27,7 +29,7 @@ const cifrasDe = (texto) => new Set([...String(texto).matchAll(NUMERO)].map((m) 
 const digitos = (t) => String(t).replace(/\D/g, "");
 const sinPuntoFinal = (t) => t.replace(/[.,;:!?]+$/, "");
 
-export function revisar(salida, { acciones, config, conocimiento = "", extras = [], yaDijo = [], horarios = null }) {
+export function revisar(salida, { acciones, config, conocimiento = "", extras = [], yaDijo = [], horarios = null, revisores = [] }) {
   if (!salida || !Array.isArray(salida.mensajes) || typeof salida.accion !== "string") {
     return rechazo([`no es el objeto pedido: ${JSON.stringify(salida)?.slice(0, 200)}`]);
   }
@@ -61,9 +63,11 @@ export function revisar(salida, { acciones, config, conocimiento = "", extras = 
   for (const m of mensajes) {
     // Precios.
     for (const d of m.matchAll(DINERO)) {
-      if (config.revisor.precios === "nunca") fondo.push(`da un precio y este bot nunca da precios: "${m}"`);
+      if (config.revisor.precios === "nunca") continue; // se revisa abajo, una vez por mensaje
       else if (!cifrasFuente.has(cifra(d[1] || d[2]))) fondo.push(`da un precio que no está en "Lo que sabes" (${d[0].trim()})`);
     }
+    if (config.revisor.precios === "nunca" && (DINERO.test(m) || DINERO_EN_PALABRAS.test(m))) fondo.push(`da un precio y este bot nunca da precios: "${m}"`);
+    DINERO.lastIndex = 0;
     // Correos.
     const correos = m.match(CORREO) || [];
     for (const c of correos) if (!fuenteMinus.includes(c.toLowerCase())) fondo.push(`da un correo que no está en "Lo que sabes" (${c})`);
@@ -91,6 +95,9 @@ export function revisar(salida, { acciones, config, conocimiento = "", extras = 
     const inicio = salida.cita?.inicio;
     if (!inicio || !horarios.includes(inicio)) fondo.push(`ofrece un horario que no está en la lista de horarios libres (${inicio || "vacío"})`);
   }
+
+  // Lo que revisa cada módulo prendido (por ejemplo, que un pedido solo traiga cosas del menú).
+  for (const r of revisores) fondo.push(...(r(salida) || []));
 
   const preguntas = (mensajes.join(" ").match(/\?/g) || []).length;
   if (config.mensajes.una_pregunta && preguntas > 1) fondo.push(`hace ${preguntas} preguntas; deja solo una`);

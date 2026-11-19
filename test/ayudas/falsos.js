@@ -1,5 +1,4 @@
 // Piezas de mentiras para probar sin red: modelo, Zernio y aviso.
-import base from "../../src/negocio/config.js";
 import agendaLink from "../../src/modulos/agenda-link.js";
 import { memoria } from "../../src/nucleo/memoria.js";
 import { d1Falso } from "./d1.js";
@@ -13,12 +12,43 @@ Sitio: https://clinicaprueba.com/precios`;
 
 export const REGLAS = "Eres el asistente de la clínica de prueba.";
 
-// Una copia de config.js con lo que cada prueba quiera cambiar.
+// La configuración de las pruebas del motor. Es fija y NO sale de src/negocio/config.js: así las
+// pruebas del núcleo dan lo mismo sea cual sea tu negocio. Tu config.js la revisa negocio.test.js.
+const BASE = {
+  negocio: "Clínica de prueba",
+  zona_horaria: "America/Mexico_City",
+  modelo: "claude-sonnet-5-5",
+  zernio: { cuentas: ["cuenta-1"] },
+  modulos: { conocimiento: "archivo", agenda: "link", aviso: "ninguno", voz: false, pedidos: false, interesados: false, enlaces: false },
+  notion: { fuentes: [] },
+  agenda: { link: "https://cal.com/clinica/cita", tipo_de_cita: null, dias: 7 },
+  aviso: { telegram_chat: "", correo: "" },
+  pedidos: {
+    moneda: "MXN",
+    entregas: { recoger: { costo: 0, pide: ["nombre"] }, domicilio: { costo: 35, pide: ["nombre", "direccion"] } },
+    pago: { texto: "Pagas al recibir.", link: "" },
+    horario: null,
+    cantidad_maxima: 20,
+    total_maximo: null,
+  },
+  interesados: { campos: ["nombre", "servicio"] },
+  acciones: {},
+  mensajes: { maximo: 3, caracteres: 300, una_pregunta: true },
+  espera_segundos: 10,
+  espera_maxima_segundos: 25,
+  historial: 30,
+  dueno: {
+    horas_silencio: 12,
+    frase_regreso: "te dejo con mi asistente",
+    frases_pase: ["Déjame revisarlo y te contesto en cuanto pueda", "Lo reviso y te escribo en un rato", "Dame chance de checarlo y te contesto pronto"],
+  },
+  adjuntos: "avisar",
+  datos: ["nombre", "servicio"],
+  revisor: { precios: "conocimiento", enlaces: [], palabras_prohibidas: [] },
+};
+
 export function configPrueba(cambios = {}) {
-  const c = structuredClone(base);
-  c.zernio.cuentas = ["cuenta-1"];
-  c.agenda.link = "https://cal.com/clinica/cita";
-  return { ...c, ...cambios };
+  return { ...structuredClone(BASE), ...cambios };
 }
 
 export function modulosPrueba(cambios = {}) {
@@ -74,3 +104,23 @@ export function entrante(texto, cambios = {}) {
 export const respuesta = (mensajes, accion = "ninguna", extra = {}) => ({
   mensajes, accion, motivo: "prueba", datos: { nombre: null, servicio: null }, ...extra,
 });
+
+// Un turno armado con todo de mentiras, para probar un módulo. Devuelve lo necesario para ver qué pasó.
+export async function armarTurno({ respuestas = [], modo = "encendido", config = configPrueba(), modulos = modulosPrueba(), ahora } = {}) {
+  const { atenderTurno } = await import("../../src/nucleo/turno.js");
+  const mem = memoriaPrueba();
+  const modelo = modeloFalso(respuestas);
+  const aviso = avisoFalso();
+  const zernio = zernioFalso();
+  const turno = () => atenderTurno({
+    id: "conv-1", env: { MODO: modo }, config, mem, modulos, reglas: REGLAS,
+    pedirAlModelo: modelo.pedir, enviar: zernio.enviar, avisar: aviso.avisar, pausa: async () => {}, ...(ahora ? { ahora } : {}),
+  });
+  // La persona escribe, el modelo "contesta" lo que le dictes y corre el turno.
+  const dice = async (texto, ...salidas) => {
+    respuestas.push(...salidas);
+    await mem.recibir(entrante(texto));
+    return turno();
+  };
+  return { mem, modelo, aviso, zernio, config, dice, enviados: () => zernio.envios.map((e) => e.texto) };
+}

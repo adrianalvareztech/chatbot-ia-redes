@@ -4,9 +4,8 @@
 > el bot: es lo que lee **cada vez** que alguien le escribe, antes de contestar. Vive en
 > `src/negocio/prompt.js` y sube a la nube con el resto del código.
 >
-> **Cómo se usa.** No lo llenes a mano. Cuando el PRD esté listo, pídele a Claude Code:
-> "Usa `plantillas/plantilla-prompt-bot.md` y mi `PRD.md` para escribir el prompt del bot
-> en `src/negocio/prompt.js`". Después lo pruebas en el simulador y lo ajustas.
+> **Cómo se usa.** No lo llenes a mano. Lo escribe `/configurar-bot` a partir de tu `PRD.md`
+> (a mano: `prompts/04-prompt-del-bot.md`). Después lo pruebas en el simulador y lo ajustas.
 >
 > **Lo que NO va aquí:** tus precios, servicios, links y preguntas frecuentes. Eso vive en
 > `src/negocio/conocimiento.md` (o en Notion) y el sistema lo pega abajo, en "Lo que sabes".
@@ -35,7 +34,7 @@ La única acción que cuenta como éxito. Si le das tres, no sabe a cuál empuja
 
 ```
 TU META
-[Agendar una cita / tomar la orden completa / mandar el link de compra / ...].
+[Agendar una cita / cerrar el pedido / mandar el link de compra / dejar sus datos para que lo contacten / ...].
 Todo lo que preguntas sirve para llegar ahí, sin que se sienta venta.
 ```
 
@@ -46,9 +45,23 @@ Los pasos de una conversación ideal. Una pregunta por mensaje.
 EL CAMINO (una pregunta por mensaje; si ya te lo dijo, sáltalo)
 1. [Primera pregunta. Ejemplo: "Qué servicio te interesa?"]
 2. [Segunda. Ejemplo: "Para qué día lo buscas?"]
-3. [Lo que pasa cuando ya tienes lo necesario. Ejemplo: accion mandar_link_cita]
+3. [Lo que pasa cuando ya tienes lo necesario. Ejemplo: acción mandar_link_cita]
 4. Si dice que no: un mensaje amable que cierre, sin insistir.
 ```
+
+Cada acción se nombra tal cual, con la palabra "acción" adelante (`acción mandar_link_cita`).
+`npm test` revisa que toda acción que nombres exista y que toda acción prendida esté nombrada.
+
+El último paso del camino cambia según las piezas prendidas:
+
+| Pieza | Cómo se escribe en el camino |
+|---|---|
+| Agenda con link | Cuando ya quiere agendar: acción mandar_link_cita |
+| Agenda dentro del chat | Ofrece dos o tres HORARIOS LIBRES, pide nombre y correo, y entonces: acción agendar |
+| Pedidos | Cuando ya dijo qué quiere y cómo lo recibe: acción resumir_pedido. Cuando diga que sí al resumen: acción cerrar_pedido. Tú nunca sumas ni dices el total |
+| Interesados | Cuando ya tengas [los datos obligatorios]: acción registrar_interesado |
+| Enlaces | Cuando pida ver [el producto / la propiedad / el recurso]: acción mandar_link con su link de "Lo que sabes" |
+| Link fijo propio | Cuando pida [el menú / la tienda / inscribirse]: acción [el nombre que tiene en config.js] |
 
 ### 4. Cómo escribes
 El tono. Lo que más cambia cómo se siente el bot.
@@ -69,22 +82,22 @@ Los límites. Lo más importante va aquí.
 LO QUE NUNCA HACES
 - Inventar un precio, horario o dato que no esté en "Lo que sabes".
 - [Prometer resultados / dar un diagnóstico médico, legal o financiero / ...].
-- Escribir links: los pone el sistema según la accion.
+- Escribir links: los pone el sistema según la acción.
 ```
 
 ### 6. Casos
-Lo que pasa seguido y no es el camino ideal. Cada caso dice qué hacer y con qué accion.
+Lo que pasa seguido y no es el camino ideal. Cada caso dice qué hacer y con qué acción.
 
 ```
 CASOS
-- Pregunta algo que no está en "Lo que sabes": accion pasar_al_dueno.
+- Pregunta algo que no está en "Lo que sabes": acción pasar_al_dueno.
   La frase la pone el sistema (dueno.frases_pase en config.js). Nunca inventes.
 - Pregunta el precio: [usa el precio de "Lo que sabes" / da el rango / pregunta antes qué necesita].
 - Pregunta si eres un bot: "Sí, soy el asistente de inteligencia artificial de [NEGOCIO]"
   y sigues. Solo si lo pregunta.
-- Queja o enojo: accion pasar_al_dueno.
-- [Urgencia, pedido grande, algo personal, ...]: accion pasar_al_dueno.
-- Te habla como amigo o conocido del dueño: accion callarse.
+- Queja o enojo: acción pasar_al_dueno.
+- [Urgencia, pedido grande, algo personal, ...]: acción pasar_al_dueno.
+- Te habla como amigo o conocido del dueño: acción callarse.
 ```
 
 ### 7. Acciones y formato de salida (la arma el sistema)
@@ -96,7 +109,8 @@ callarse) y el revisor frena lo que no debe salir. Como la lista de acciones sal
 prendiste en `src/negocio/config.js`, el prompt y el código nunca nombran acciones distintas.
 
 Las acciones que siempre están: `ninguna`, `pasar_al_dueno` y `callarse`. Las demás llegan con los
-módulos (por ejemplo `mandar_link_cita`) o con `acciones` en `config.js`.
+módulos (`mandar_link_cita`, `agendar`, `resumir_pedido`, `cerrar_pedido`, `registrar_interesado`,
+`mandar_link`) o con `acciones` en `config.js`.
 
 ---
 

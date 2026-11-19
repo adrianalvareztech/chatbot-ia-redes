@@ -10,10 +10,12 @@
     "test": "node --import ./test/ayudas/md.js --test \"test/**/*.test.js\"",
     "simular": "node test/simulador/chat.mjs",
     "prompt": "node --import ./test/ayudas/md.js scripts/ver-prompt.mjs",
+    "pendientes": "node --import ./test/ayudas/md.js scripts/pendientes.mjs",
     "db:local": "wrangler d1 migrations apply chatbot --local",
     "db:nube": "wrangler d1 migrations apply chatbot --remote",
     "webhook": "node scripts/webhook.mjs",
-    "deploy": "npm test && npm run db:nube && wrangler deploy"
+    "telegram-chat": "node scripts/telegram-chat.mjs",
+    "deploy": "npm test && npm run pendientes && npm run db:nube && wrangler deploy"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "1.6.0"

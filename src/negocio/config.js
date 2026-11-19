@@ -17,6 +17,9 @@ export default {
     agenda: "link",                     // "ninguna" | "link" | "cal"
     aviso: "telegram",                  // "ninguno" | "telegram" | "correo"
     voz: false,                         // true = entiende notas de voz
+    pedidos: false,                     // true = toma pedidos: arma la orden, suma el total y te avisa
+    interesados: false,                 // true = te manda los datos de quien ya está calificado, sin callarse
+    enlaces: false,                     // true = puede mandar cualquier link que esté en "Lo que sabe"
   },
 
   notion: { fuentes: [] },              // ids de página o de base de Notion (si conocimiento = "notion")
@@ -24,8 +27,28 @@ export default {
     link: "https://cal.com/TU-USUARIO/TU-CITA",  // si agenda = "link"
     tipo_de_cita: null,                 // id del tipo de cita en Cal.com (si agenda = "cal")
     dias: 7,                            // cuántos días de horarios ofrece (si agenda = "cal")
+    avisar: false,                      // true = te avisa a quién le mandó el link y qué sabe de esa persona (si agenda = "link")
   },
   aviso: { telegram_chat: "", correo: "" },
+
+  // Solo si pedidos = true. Lo que se puede pedir y sus precios salen de "Lo que sabe", no de aquí.
+  pedidos: {
+    moneda: "MXN",
+    // Cada forma de entrega: cuánto cuesta y qué datos (de la lista `datos`) pide antes de cerrar.
+    entregas: {
+      recoger: { costo: 0, pide: ["nombre"] },
+      // domicilio: { costo: 35, pide: ["nombre", "direccion", "telefono"], pago: "Pagas en efectivo al recibir." },
+      // `pago` es opcional: si esa entrega se paga distinto, va aquí y le gana a pago.texto.
+    },
+    pago: { texto: "", link: "" },      // lo que el sistema manda al cerrar: cómo se paga y, si hay, el link
+    horario: null,                      // null = siempre. O por día: { lunes: "08:00-20:00", sabado: "09:00-14:00" }
+    cantidad_maxima: 20,                // más que esto de un mismo artículo pasa al dueño
+    piezas_maximas: null,               // más piezas que esto en total (mayoreo) pasa al dueño. null = sin tope
+    total_maximo: null,                 // un pedido que sume más que esto pasa al dueño. null = sin tope
+  },
+
+  // Solo si interesados = true. Los datos obligatorios antes de avisarte (tienen que estar en `datos`).
+  interesados: { campos: ["nombre"] },
 
   // Acciones propias que solo mandan un link fijo.
   acciones: {

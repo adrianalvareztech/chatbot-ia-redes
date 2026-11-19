@@ -8,6 +8,7 @@
 //   /dueno <texto>    contestas tú a mano (el bot se calla)
 //   /regreso          mandas la frase de regreso (el bot retoma)
 //   /rafaga a | b | c tres mensajes seguidos, como cuando alguien escribe en pedacitos
+//   /foto             la persona manda solo una foto (el bot no contesta y le avisa al dueño)
 //   /repetir          el último evento otra vez (Zernio a veces repite)
 //   /firma-mala       un evento con firma falsa (tiene que salir 401)
 //   /nueva            empieza otra conversación
@@ -112,6 +113,15 @@ async function procesar(linea) {
     return true;
   }
   if (texto === "/firma-mala") { console.log(`  [firma falsa → ${await mandar(evento("message.received", "hola"), { firmaMala: true })}]`); return true; }
+  if (texto === "/foto") {
+    const e = evento("message.received", "");
+    const cuerpo = JSON.parse(e.cuerpo);
+    cuerpo.message.attachments = [{ type: "image", url: "https://ejemplo.invalid/foto.jpg" }];
+    console.log(`  [la persona mandó una foto → ${await mandar({ id: e.id, cuerpo: JSON.stringify(cuerpo) })}]`);
+    console.log("  [el bot no entiende fotos: no contesta y le avisa al dueño. Revisa tu Telegram o la terminal de npm run dev]");
+    await new Promise((r) => setTimeout(r, (config.espera_segundos + 3) * 1000));
+    return true;
+  }
   if (texto.startsWith("/dueno ")) {
     console.log(`  [tú, a mano → ${await mandar(evento("message.sent", texto.slice(7)))}]`);
     await marcarVisto();

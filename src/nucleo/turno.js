@@ -63,7 +63,10 @@ export async function atenderTurno({
   const esq = esquema({ acciones, config, campos: camposExtra(modulos) });
   const ctx = contexto({ conv, config, extras, regreso: vencioSilencio(conv, t), ahora: t });
   const yaDijo = hilo.filter((h) => h.quien === "bot").map((h) => h.texto);
-  const revision = { acciones, config, conocimiento, extras, yaDijo, horarios };
+  // Lo que un módulo necesita para revisar o ejecutar su acción (el menú sale de "Lo que sabes").
+  const paraModulos = { env, config, conv, modo, conocimiento, yaDijo, ahora: t };
+  const revisores = prendidos(modulos).filter((m) => m.revisar).map((m) => (salida) => m.revisar(salida, paraModulos));
+  const revision = { acciones, config, conocimiento, extras, yaDijo, horarios, revisores };
   const marca = await mem.ultimoEntranteId(id);
 
   // Modelo y revisor: una llamada, y si se rechaza, una más con los motivos.
@@ -107,11 +110,12 @@ export async function atenderTurno({
 
   // La acción.
   let mensajes = [...final.mensajes];
+  let avisoDeAccion = null;
   const accion = final.accion;
   const dueno = duenoDeAccion(modulos, accion);
   if (dueno) {
     let r;
-    try { r = await dueno.ejecutar(accion, final, { env, config, conv, modo }); } catch (e) { r = { fallo: e.message }; }
+    try { r = await dueno.ejecutar(accion, final, paraModulos); } catch (e) { r = { fallo: e.message }; }
     if (r?.fallo) {
       forzado = [`${accion} falló: ${r.fallo}`];
       Object.assign(final, revisar({ mensajes: [], accion: "pasar_al_dueno", motivo: forzado[0], datos: final.datos }, revision).salida);
@@ -119,6 +123,9 @@ export async function atenderTurno({
     } else {
       mensajes.push(...(r?.mensajes || []));
       if (r?.link) mensajes.push(r.link);
+      // Un módulo puede avisarle al dueño sin callar al bot (un pedido, un interesado) y guardar datos.
+      avisoDeAccion = r?.aviso || null;
+      if (r?.datos) final.datos = { ...final.datos, ...r.datos };
     }
   } else if (acciones[accion]?.link) {
     mensajes.push(acciones[accion].link); // el link lo pone el código, nunca el modelo
@@ -146,6 +153,8 @@ export async function atenderTurno({
   if (modo === "solo-avisos") {
     await avisar(`[solo avisos] A ${quien} le contestaría:\n\n${mensajes.join("\n") || "(nada)"}\n\nacción: ${accion} (${final.motivo || "sin motivo"})`);
   }
+
+  if (avisoDeAccion) await avisar(modo === "solo-avisos" ? `[solo avisos] ${avisoDeAccion}` : avisoDeAccion);
 
   if (vencioSilencio(conv, t)) await mem.soltar(id);
   const callar = modo !== "solo-avisos";

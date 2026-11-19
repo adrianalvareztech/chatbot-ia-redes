@@ -6,12 +6,18 @@ import agendaCal from "../modulos/agenda-cal.js";
 import avisoTelegram from "../modulos/aviso-telegram.js";
 import avisoCorreo from "../modulos/aviso-correo.js";
 import voz from "../modulos/voz.js";
+import pedidos from "../modulos/pedidos.js";
+import interesados from "../modulos/interesados.js";
+import enlaces from "../modulos/enlaces.js";
 
 export const CATALOGO = {
   conocimiento: { archivo: conocimientoArchivo, notion: conocimientoNotion },
   agenda: { ninguna: null, link: agendaLink, cal: agendaCal },
   aviso: { ninguno: null, telegram: avisoTelegram, correo: avisoCorreo },
   voz: { true: voz, false: null },
+  pedidos: { true: pedidos, false: null },
+  interesados: { true: interesados, false: null },
+  enlaces: { true: enlaces, false: null },
 };
 
 // Las acciones que el bot siempre tiene, prenda lo que prenda.

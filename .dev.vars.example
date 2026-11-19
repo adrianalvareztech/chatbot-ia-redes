@@ -24,3 +24,5 @@ TELEGRAM_BOT_TOKEN=
 
 # Si aviso = "correo"
 RESEND_API_KEY=
+
+# Pedidos, interesados y enlaces no piden llave.
